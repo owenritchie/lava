@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lava"
+version = "0.1.0"
+description = "A CLI toolkit for interacting with Obsidian vaults"
+requires-python = ">=3.10"
+dependencies = [
+    "python-frontmatter",
+    "typer",
+    "rich",
+    "platformdirs",
+    "networkx",
+    "rank-bm25",
+    "toml",
+    "textual",
+]
+
+[project.scripts]
+lava = "lava.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lava"]
