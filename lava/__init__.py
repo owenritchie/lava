@@ -1,3 +1,8 @@
 """lava — A CLI toolkit for interacting with Obsidian vaults."""
 
-__version__ = "0.1.0"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("lava-cmd")
+except PackageNotFoundError:
+    __version__ = "unknown"
