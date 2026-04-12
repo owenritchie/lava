@@ -169,7 +169,7 @@ def cmd_search(
 
         if action == "e":
             editor_cfg = config.get("editor", "")
-            start_line = ed.body_start_line(selected_path)
+            start_line = ed.last_line(selected_path)
             ed.open_in_editor(selected_path, editor_override=editor_cfg, start_line=start_line)
         elif action == "v":
             note = vlt.parse_note(selected_path)

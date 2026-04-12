@@ -21,6 +21,15 @@ def body_start_line(path: Path) -> int:
     return 1
 
 
+def last_line(path: Path) -> int:
+    """Return the 1-based line number to open the editor at (end of content, after frontmatter)."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return 1
+    return max(len(lines), body_start_line(path))
+
+
 def open_in_editor(path: Path, editor_override: str = "", start_line: int = 1) -> None:
     """Open a file in $EDITOR at start_line, or fall back to the Textual TUI."""
     editor = editor_override or os.environ.get("EDITOR", "")

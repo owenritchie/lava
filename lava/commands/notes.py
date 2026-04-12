@@ -87,7 +87,7 @@ def cmd_new(
     open_after = Confirm.ask("Open in editor?", default=False)
     if open_after:
         editor_cfg = config.get("editor", "")
-        start = ed.body_start_line(note_path)
+        start = ed.last_line(note_path)
         ed.open_in_editor(note_path, editor_override=editor_cfg, start_line=start)
         _suggest_links(vault_path, note_path)
 
@@ -138,7 +138,7 @@ def cmd_edit(
         ed.open_in_tui(matched)
     else:
         editor_cfg = config.get("editor", "")
-        start = ed.body_start_line(matched)
+        start = ed.last_line(matched)
         ed.open_in_editor(matched, editor_override=editor_cfg, start_line=start)
 
     _suggest_links(vault_path, matched)

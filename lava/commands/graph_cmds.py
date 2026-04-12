@@ -278,7 +278,7 @@ def cmd_orphans() -> None:
         action = Prompt.ask(r"  \[e]dit  \[m]ove  \[d]elete", default="").strip().lower()
 
         if action == "e":
-            start_line = ed.body_start_line(selected_path)
+            start_line = ed.last_line(selected_path)
             ed.open_in_editor(selected_path, editor_override=config.get("editor", ""), start_line=start_line)
             orphans.pop(idx)
 
