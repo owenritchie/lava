@@ -11,7 +11,7 @@ app = typer.Typer(
     name="lava",
     help="A CLI toolkit for interacting with Obsidian vaults.",
     add_completion=False,
-    no_args_is_help=True,
+    no_args_is_help=False,
 )
 
 console = Console()
