@@ -1,5 +1,7 @@
 """lava — CLI entry point."""
-from lava._app import app
+import typer
+from lava._app import app, console
+from lava import __version__ as _LAVA_VERSION
 
 import lava.commands.nav  # noqa: F401
 import lava.commands.notes  # noqa: F401
@@ -23,6 +25,29 @@ app.command("d", hidden=True)(cmd_delete)
 app.command("m", hidden=True)(cmd_move)
 app.command("v", hidden=True)(cmd_view)
 app.command("o", hidden=True)(cmd_orphans)
+
+
+_ASCII_LAVA = """\
+  ██╗      █████╗ ██╗   ██╗ █████╗
+  ██║     ██╔══██╗██║   ██║██╔══██╗
+  ██║     ███████║██║   ██║███████║
+  ██║     ██╔══██║╚██╗ ██╔╝██╔══██║
+  ███████╗██║  ██║ ╚████╔╝ ██║  ██║
+  ╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝"""
+
+
+@app.callback(invoke_without_command=True)
+def _home(ctx: typer.Context) -> None:
+    if ctx.invoked_subcommand is not None:
+        return
+    console.print(f"\n[orange1]{_ASCII_LAVA}[/orange1]\n")
+    console.print(f"  [light_blue]v{_LAVA_VERSION}[/light_blue]\n")
+    console.print(
+        "  Lava is a simple, easy to use note-taker for UNIX CLIs. Notes can be easily\n"
+        "  created, tagged and linked in tree style hierarchies. To begin, set your root\n"
+        "  directory (vault) by using [bold]lava dir set <path>[/bold]\n"
+    )
+    console.print("  [dim]Use --help for further information.[/dim]\n")
 
 
 def main() -> None:
