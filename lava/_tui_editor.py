@@ -32,7 +32,9 @@ class LavaEditorApp(App):
 
     def on_mount(self) -> None:
         self.title = f"lava — {self._path.name}"
-        self.query_one("#editor", TextArea).focus()
+        text_area = self.query_one("#editor", TextArea)
+        text_area.focus()
+        text_area.move_cursor(text_area.document.end)
 
     def action_save(self) -> None:
         content = self.query_one("#editor", TextArea).text
