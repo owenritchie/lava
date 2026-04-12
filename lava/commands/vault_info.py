@@ -91,6 +91,32 @@ def cmd_count() -> None:
     console.print(f"[orange1]{len(all_notes)}[/orange1] notes [dim]in vault[/dim]")
 
 
+@app.command("clear", rich_help_panel="Vault")
+def cmd_clear() -> None:
+    """Clear all notes from the archive (_archive/)."""
+    config = cfg.load_config()
+    try:
+        vault_path = vlt.get_vault_path(config)
+    except ValueError as e:
+        ui.print_error(str(e))
+        raise typer.Exit(1)
+
+    archive_dir = vault_path / "_archive"
+    if not archive_dir.exists() or not any(archive_dir.iterdir()):
+        console.print("[dim]Archive is already empty.[/dim]")
+        return
+
+    items = list(archive_dir.iterdir())
+    console.print(f"\n[bold]Archive contains {len(items)} item{'s' if len(items) != 1 else ''}.[/bold]\n")
+    confirm = Prompt.ask("Type [bold red]DELETE[/bold red] to confirm").strip()
+    if confirm != "DELETE":
+        console.print("[dim]Cancelled.[/dim]")
+        return
+
+    shutil.rmtree(archive_dir)
+    ui.print_success("Archive cleared.")
+
+
 @app.command("search", rich_help_panel="Vault")
 def cmd_search(
     query: Annotated[str, typer.Argument(help="Search query")],
