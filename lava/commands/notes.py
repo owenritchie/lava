@@ -16,7 +16,7 @@ from lava import editor as ed
 from lava import graph as gph
 from lava import vault as vlt
 from lava import ui
-from lava.ui import C_PRIMARY
+from lava.ui import C_PRIMARY, C_TEXT, C_EMBER
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label, _pick_move_destination
 
@@ -47,10 +47,10 @@ def cmd_new(
         subdirs = sorted([p for p in links_root.rglob("*") if p.is_dir()])
         if subdirs:
             console.print(f"\n[bold {C_PRIMARY}]Links folder[/bold {C_PRIMARY}]  [dim]{links_folder}/[/dim]\n")
-            console.print(f"  [dim] 0.[/dim]  [white]{links_folder}/[/white]  [dim](root)[/dim]")
+            console.print(f"  [dim] 0.[/dim]  [{C_TEXT}]{links_folder}/[/{C_TEXT}]  [dim](root)[/dim]")
             for i, d in enumerate(subdirs, 1):
                 rel = d.relative_to(links_root)
-                console.print(f"  [dim]{i:2}.[/dim]  [white]{rel}/[/white]")
+                console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{rel}/[/{C_TEXT}]")
             console.print()
             pick = Prompt.ask("Create in folder #", default="0").strip()
             try:
@@ -66,7 +66,7 @@ def cmd_new(
     if not name:
         rel = current.relative_to(vault_path)
         console.print(f"\n[dim]{rel}/[/dim]\n")
-        name = Prompt.ask("[orange1]Note name[/orange1]").strip()
+        name = Prompt.ask(f"[{C_PRIMARY}]Note name[/{C_PRIMARY}]").strip()
         if not name:
             raise typer.Exit(0)
 
@@ -114,7 +114,7 @@ def cmd_edit(
             raise typer.Exit(1)
         console.print(f"\n{_cwd_label(vault_path)}\n")
         for i, n in enumerate(notes):
-            console.print(f"  [dim]{i:2}.[/dim]  [white]{n.stem}[/white]")
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{n.stem}[/{C_TEXT}]")
         console.print()
         choice = Prompt.ask("Edit #", default="").strip()
         if not choice:
@@ -130,7 +130,7 @@ def cmd_edit(
             ui.print_error(f"No note found matching: {name}")
             raise typer.Exit(1)
         if matched.stem.lower() != name.lower():
-            confirmed = Confirm.ask(f"Open [orange1]{matched.stem}[/orange1]?", default=True)
+            confirmed = Confirm.ask(f"Open [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]?", default=True)
             if not confirmed:
                 raise typer.Exit(0)
 
@@ -171,11 +171,11 @@ def _suggest_links(vault_path: Path, note_path: Path) -> None:
     console.print(f"\n[bold {C_PRIMARY}]Suggested links[/bold {C_PRIMARY}] [dim](most linked notes)[/dim]")
     for i, r in enumerate(results, 1):
         inbound = graph.in_degree(r["name"].lower())
-        console.print(f"  [dim]{i}.[/dim]  [white]{r['name']}[/white]  [dim]←{inbound}[/dim]")
+        console.print(f"  [dim]{i}.[/dim]  [{C_TEXT}]{r['name']}[/{C_TEXT}]  [dim]←{inbound}[/dim]")
     console.print()
 
     choice = Prompt.ask(
-        r'[dim]Add links (e.g.[/dim] [white]1 3 "School" "Work"[/white][dim]), \[l] for links folder, or Enter to skip[/dim]',
+        f'[dim]Add links (e.g.[/dim] [{C_TEXT}]1 3 "School" "Work"[/{C_TEXT}][dim]), \\[l] for links folder, or Enter to skip[/dim]',
         default="",
     ).strip()
     if not choice:
@@ -223,12 +223,12 @@ def _suggest_links(vault_path: Path, note_path: Path) -> None:
             inbound = graph.in_degree(note_path.stem.lower()) if graph.has_node(note_path.stem.lower()) else 0
             i = len(numbered) + 1
             indent = "    " * depth
-            console.print(f"  [dim]{i:2}.[/dim]  {indent}[white]{note_path.stem}[/white]  [dim]←{inbound}[/dim]")
+            console.print(f"  [dim]{i:2}.[/dim]  {indent}[{C_TEXT}]{note_path.stem}[/{C_TEXT}]  [dim]←{inbound}[/dim]")
             numbered.append(note_path)
         console.print()
 
         pick = Prompt.ask(
-            r'[dim]Pick note numbers (e.g.[/dim] [white]1 3[/white][dim]) or Enter to skip[/dim]',
+            f'[dim]Pick note numbers (e.g.[/dim] [{C_TEXT}]1 3[/{C_TEXT}][dim]) or Enter to skip[/dim]',
             default="",
         ).strip()
         if not pick:
@@ -269,7 +269,7 @@ def _suggest_links(vault_path: Path, note_path: Path) -> None:
             if name_match is not None:
                 selected.append(name_match)
             else:
-                console.print(f'[gold1]Warning:[/gold1] "{note_name}" doesn\'t exist — creating it.')
+                console.print(f'[{C_EMBER}]Warning:[/{C_EMBER}] "{note_name}" doesn\'t exist — creating it.')
                 vlt.create_note(vault_path, note_name, body="", links=[])
                 selected.append(note_name)
 
@@ -314,7 +314,7 @@ def cmd_delete(
     if folder_target.exists() and folder_target.is_dir():
         note_count = sum(1 for _ in folder_target.rglob("*.md"))
         confirmed = Confirm.ask(
-            f"Delete folder [orange1]{folder_target.name}/[/orange1] ({note_count} notes)?",
+            f"Delete folder [{C_PRIMARY}]{folder_target.name}/[/{C_PRIMARY}] ({note_count} notes)?",
             default=False,
         )
         if not confirmed:
@@ -337,7 +337,7 @@ def cmd_delete(
         ui.print_error(f"No note or folder found matching: {name}")
         raise typer.Exit(1)
 
-    confirmed = Confirm.ask(f"Delete [orange1]{matched.stem}[/orange1]?", default=False)
+    confirmed = Confirm.ask(f"Delete [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]?", default=False)
     if not confirmed:
         raise typer.Exit(0)
 
@@ -348,7 +348,7 @@ def cmd_delete(
 
     if parents:
         console.print(
-            f"[gold1]Warning:[/gold1] {len(parents)} note(s) link to [orange1]{matched.stem}[/orange1]:"
+            f"[{C_EMBER}]Warning:[/{C_EMBER}] {len(parents)} note(s) link to [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]:"
         )
         for p in parents[:10]:
             console.print(f"  • {p}")
@@ -383,11 +383,11 @@ def _pick_delete_target(current: Path, vault_path: Path) -> str | None:
     for d in subdirs:
         note_count = sum(1 for _ in d.rglob("*.md"))
         idx = len(items)
-        console.print(f"  [dim]{idx:2}.[/dim]  [orange1]{d.name}/[/orange1] [dim]{note_count}n[/dim]")
+        console.print(f"  [dim]{idx:2}.[/dim]  [{C_PRIMARY}]{d.name}/[/{C_PRIMARY}] [dim]{note_count}n[/dim]")
         items.append((f"{d.name}/", d.name))
     for n in notes:
         idx = len(items)
-        console.print(f"  [dim]{idx:2}.[/dim]  [white]{n.stem}[/white]")
+        console.print(f"  [dim]{idx:2}.[/dim]  [{C_TEXT}]{n.stem}[/{C_TEXT}]")
         items.append((n.stem, n.stem))
 
     console.print()
@@ -424,7 +424,7 @@ def cmd_move(
             raise typer.Exit(1)
         console.print(f"\n{_cwd_label(vault_path)}\n")
         for i, n in enumerate(notes):
-            console.print(f"  [dim]{i:2}.[/dim]  [white]{n.stem}[/white]")
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{n.stem}[/{C_TEXT}]")
         console.print()
         choice = Prompt.ask("Move #", default="").strip()
         if not choice:
@@ -441,7 +441,7 @@ def cmd_move(
             raise typer.Exit(1)
 
         if matched.stem.lower() != name.lower():
-            confirmed = Confirm.ask(f"Move [orange1]{matched.stem}[/orange1]?", default=True)
+            confirmed = Confirm.ask(f"Move [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]?", default=True)
             if not confirmed:
                 raise typer.Exit(0)
 
@@ -479,7 +479,7 @@ def cmd_view(
             raise typer.Exit(1)
         console.print(f"\n{_cwd_label(vault_path)}\n")
         for i, n in enumerate(notes):
-            console.print(f"  [dim]{i:2}.[/dim]  [white]{n.stem}[/white]")
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{n.stem}[/{C_TEXT}]")
         console.print()
         choice = Prompt.ask("View #", default="").strip()
         if not choice:
@@ -517,10 +517,10 @@ def cmd_view(
     if date:
         header_parts.append(f"[dim]{date}[/dim]")
     if tags:
-        tag_str = "  ".join(f"[orange1]#{t}[/orange1]" for t in tags)
+        tag_str = "  ".join(f"[{C_PRIMARY}]#{t}[/{C_PRIMARY}]" for t in tags)
         header_parts.append(tag_str)
 
-    console.print(f"\n[bold white]{title}[/bold white]" + (f"   {'   '.join(header_parts)}" if header_parts else ""))
+    console.print(f"\n[bold {C_TEXT}]{title}[/bold {C_TEXT}]" + (f"   {'   '.join(header_parts)}" if header_parts else ""))
     console.rule(style="dim")
 
     console.print(Markdown(body))
