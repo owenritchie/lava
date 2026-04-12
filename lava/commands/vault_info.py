@@ -19,6 +19,7 @@ from lava import graph as gph
 from lava import search as srch
 from lava import vault as vlt
 from lava import ui
+from lava.ui import C_PRIMARY, C_EMBER, C_TEXT, C_RULE
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label, _pick_move_destination
 
@@ -33,7 +34,7 @@ def cmd_status() -> None:
         ui.print_error(str(e))
         raise typer.Exit(1)
 
-    with Progress(SpinnerColumn(), TextColumn("[orange1]{task.description}"), transient=True) as progress:
+    with Progress(SpinnerColumn(), TextColumn(f"[{C_PRIMARY}]{{task.description}}"), transient=True) as progress:
         progress.add_task("Scanning vault...", total=None)
         notes_paths = vlt.list_notes(vault_path)
         notes = [vlt.parse_note(p) for p in notes_paths]
@@ -56,18 +57,18 @@ def cmd_status() -> None:
         last_mod_str = f"{last_mod_path.stem} ({dt.strftime('%Y-%m-%d %H:%M')})"
 
     table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_column("Key", style="orange1")
-    table.add_column("Value", style="white")
+    table.add_column("Key", style=C_PRIMARY)
+    table.add_column("Value", style=C_TEXT)
     table.add_row("Total notes", str(len(notes)))
     table.add_row("Orphaned notes", str(len(orphans)))
     table.add_row("Last modified", last_mod_str or "[dim]—[/dim]")
 
-    console.print(Panel(table, title="[bold orange1]Vault Status[/bold orange1]", border_style="dark_red", expand=False))
+    console.print(Panel(table, title=f"[bold {C_PRIMARY}]Vault Status[/bold {C_PRIMARY}]", border_style=C_RULE, expand=False))
 
     if most_linked:
-        ml_table = Table(title="Most Linked Notes", header_style="bold orange1")
-        ml_table.add_column("Note", style="white")
-        ml_table.add_column("Inbound Links", style="gold1", justify="right")
+        ml_table = Table(title="Most Linked Notes", header_style=f"bold {C_PRIMARY}")
+        ml_table.add_column("Note", style=C_TEXT)
+        ml_table.add_column("Inbound Links", style=C_EMBER, justify="right")
         for name, count in most_linked:
             ml_table.add_row(name, str(count))
         console.print(ml_table)
@@ -87,8 +88,8 @@ def cmd_count() -> None:
     current = _cwd(vault_path)
     cwd_notes = [p for p in all_notes if str(p).startswith(str(current))]
     label = _cwd_label(vault_path)
-    console.print(f"[cornflower_blue]{len(cwd_notes)}[/cornflower_blue] notes [dim]in[/dim] {label}")
-    console.print(f"[orange1]{len(all_notes)}[/orange1] notes [dim]in vault[/dim]")
+    console.print(f"[{C_EMBER}]{len(cwd_notes)}[/{C_EMBER}] notes [dim]in[/dim] {label}")
+    console.print(f"[{C_PRIMARY}]{len(all_notes)}[/{C_PRIMARY}] notes [dim]in vault[/dim]")
 
 
 @app.command("clear", rich_help_panel="Vault")
@@ -152,13 +153,13 @@ def cmd_search(
             result_items.append((name, path))
 
     def _print_results() -> None:
-        console.print(f"\n[bold orange1]Search:[/bold orange1] [dim]{query}[/dim]\n")
+        console.print(f"\n[bold {C_PRIMARY}]Search:[/bold {C_PRIMARY}] [dim]{query}[/dim]\n")
         for i, (name, path) in enumerate(result_items, 1):
             rel = path.relative_to(vault_path)
             r = next((x for x in results if x.get("name") == name), {})
             snippet = _make_snippet(r.get("body", ""), query, length=60)
             console.print(
-                f"  [dim]{i:2}.[/dim]  [white]{name}[/white]  [dim]{rel.parent}/[/dim]"
+                f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{name}[/{C_TEXT}]  [dim]{rel.parent}/[/dim]"
             )
             if snippet:
                 console.print(f"        [dim italic]{snippet}[/dim italic]")
@@ -181,7 +182,7 @@ def cmd_search(
 
         selected_name, selected_path = result_items[idx]
         console.print(
-            f"\n[bold white]{selected_name}[/bold white]  "
+            f"\n[bold {C_TEXT}]{selected_name}[/bold {C_TEXT}]  "
             f"[dim]{selected_path.relative_to(vault_path)}[/dim]"
         )
         action = Prompt.ask(
@@ -198,7 +199,7 @@ def cmd_search(
             fm = note["frontmatter"]
             body = note["body"]
             title = fm.get("title", selected_path.stem)
-            console.print(f"\n[bold white]{title}[/bold white]")
+            console.print(f"\n[bold {C_TEXT}]{title}[/bold {C_TEXT}]")
             console.rule(style="dim")
             from rich.markdown import Markdown
             console.print(Markdown(body))
@@ -211,7 +212,7 @@ def cmd_search(
                     console.print(f"[dim]Updated wikilinks in {updated} note(s).[/dim]")
                 result_items.pop(idx)
         elif action == "d":
-            confirmed = Confirm.ask(f"Archive [orange1]{selected_name}[/orange1]?", default=False)
+            confirmed = Confirm.ask(f"Archive [{C_PRIMARY}]{selected_name}[/{C_PRIMARY}]?", default=False)
             if confirmed:
                 archive_dir = vault_path / "_archive"
                 archive_dir.mkdir(exist_ok=True)

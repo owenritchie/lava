@@ -12,6 +12,7 @@ from rich.table import Table
 from lava import config as cfg
 from lava import vault as vlt
 from lava import ui
+from lava.ui import C_PRIMARY, C_TEXT
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label
 
@@ -53,7 +54,7 @@ def cmd_cd(
         console.print(f"  [dim] 0.[/dim]  [dim].. (up)[/dim]")
         for i, d in enumerate(subdirs, 1):
             note_count = sum(1 for _ in d.rglob("*.md"))
-            console.print(f"  [dim]{i:2}.[/dim]  [orange1]{d.name}/[/orange1] [dim]{note_count}n[/dim]")
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_PRIMARY}]{d.name}/[/{C_PRIMARY}] [dim]{note_count}n[/dim]")
         console.print()
         choice = Prompt.ask("Pick A Directory #", default="").strip()
         if not choice:
@@ -121,7 +122,7 @@ def cmd_mkdir(
         raise typer.Exit(1)
 
     if not name:
-        name = Prompt.ask("[orange1]Folder name[/orange1]").strip()
+        name = Prompt.ask(f"[{C_PRIMARY}]Folder name[/{C_PRIMARY}]").strip()
         if not name:
             raise typer.Exit(0)
 
@@ -158,7 +159,7 @@ def cmd_ls(
             console.print("[dim]No folders here.[/dim]")
         else:
             for d in subdirs:
-                console.print(f"[orange1]{d.name}/[/orange1]")
+                console.print(f"[{C_PRIMARY}]{d.name}/[/{C_PRIMARY}]")
         return
 
     target_is_specific = False
@@ -186,7 +187,7 @@ def cmd_ls(
     if target_is_specific:
         rel = target.relative_to(vault_path)
         parts = rel.parts
-        trail = "/".join(f"[orange1]{p}[/orange1]" for p in parts)
+        trail = "/".join(f"[{C_PRIMARY}]{p}[/{C_PRIMARY}]" for p in parts)
         folder_label = f"[dim]{vault_path.name}/[/dim]{trail} [dim]/[/dim]"
         console.print(f"\n{folder_label}\n")
     else:
@@ -206,13 +207,13 @@ def cmd_ls(
 
     for d in subdirs:
         note_count = sum(1 for _ in d.rglob("*.md"))
-        table.add_row("[orange1]📁[/orange1]", f"[orange1]{d.name}/[/orange1]", f"{note_count} note{'s' if note_count != 1 else ''}")
+        table.add_row(f"[{C_PRIMARY}]📁[/{C_PRIMARY}]", f"[{C_PRIMARY}]{d.name}/[/{C_PRIMARY}]", f"{note_count} note{'s' if note_count != 1 else ''}")
 
     for n in notes:
         stat = n.stat()
         from datetime import datetime
         mtime = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
-        table.add_row("[dim]·[/dim]", f"[white]{n.stem}[/white]", mtime)
+        table.add_row("[dim]·[/dim]", f"[{C_TEXT}]{n.stem}[/{C_TEXT}]", mtime)
 
     console.print(table)
     console.print(f"\n[dim]{len(subdirs)} folder{'s' if len(subdirs) != 1 else ''}  {len(notes)} note{'s' if len(notes) != 1 else ''}[/dim]")

@@ -14,7 +14,7 @@ from rich.table import Table
 from lava import config as cfg
 from lava import ui
 from lava._app import app, console, _LAVA_VERSION
-from lava.ui import C_PRIMARY
+from lava.ui import C_PRIMARY, C_TEXT, C_EMBER
 
 
 dir_app = typer.Typer(
@@ -64,14 +64,14 @@ def _dir_set_prompt() -> None:
     """Interactively set the active vault path."""
     current = cfg.get_vault_path()
     if current:
-        console.print(f"[dim]Current vault:[/dim] [orange1]{current}[/orange1]")
+        console.print(f"[dim]Current vault:[/dim] [{C_PRIMARY}]{current}[/{C_PRIMARY}]")
     else:
         console.print("[dim]No vault set.[/dim]")
 
     console.print(
-        f"\n  [dim]Enter a path, or [/dim][bold white]f[/bold white][dim] to browse folders[/dim]"
+        f"\n  [dim]Enter a path, or [/dim][bold {C_TEXT}]f[/bold {C_TEXT}][dim] to browse folders[/dim]"
     )
-    raw = Prompt.ask("[orange1]Vault path[/orange1]", default="").strip()
+    raw = Prompt.ask(f"[{C_PRIMARY}]Vault path[/{C_PRIMARY}]", default="").strip()
 
     if not raw:
         return
@@ -100,12 +100,12 @@ def _dir_history() -> None:
         console.print("[dim]No vault history.[/dim]")
         return
 
-    table = Table(title="Recent Vaults", header_style="bold orange1")
+    table = Table(title="Recent Vaults", header_style=f"bold {C_PRIMARY}")
     table.add_column("#", style="dim", width=4)
-    table.add_column("Path", style="white")
+    table.add_column("Path", style=C_TEXT)
     current = cfg.get_vault_path()
     for i, p in enumerate(history, 1):
-        marker = " [gold1](active)[/gold1]" if p == current else ""
+        marker = f" [{C_EMBER}](active)[/{C_EMBER}]" if p == current else ""
         table.add_row(str(i), p + marker)
     console.print(table)
 
@@ -130,7 +130,7 @@ def _dir_pick() -> None:
         ui.print_error("No vault history to pick from.")
         raise typer.Exit(1)
 
-    console.print("[bold orange1]Recent vaults:[/bold orange1]")
+    console.print(f"[bold {C_PRIMARY}]Recent vaults:[/bold {C_PRIMARY}]")
     for i, p in enumerate(history, 1):
         console.print(f"  [dim]{i}.[/dim] {p}")
 
@@ -162,7 +162,7 @@ def _pick_fs_folder() -> Path | None:
         if current != current.anchor:
             console.print(f"  [dim] b.[/dim]  [dim].. (go up)[/dim]")
         for i, d in enumerate(subdirs, 1):
-            console.print(f"  [dim]{i:2}.[/dim]  [orange1]{d.name}/[/orange1]")
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_PRIMARY}]{d.name}/[/{C_PRIMARY}]")
         console.print()
 
         choice = Prompt.ask("Pick folder or #", default="").strip().lower()
@@ -193,14 +193,14 @@ def dir_init(
         location = _pick_fs_folder()
         if location is None:
             raise typer.Exit(0)
-        vault_name = Prompt.ask("[orange1]Vault name[/orange1]").strip()
+        vault_name = Prompt.ask(f"[{C_PRIMARY}]Vault name[/{C_PRIMARY}]").strip()
         if not vault_name:
             raise typer.Exit(0)
         resolved = location / vault_name
     elif path:
         resolved = Path(path).expanduser().resolve()
     else:
-        vault_name = Prompt.ask("[orange1]Vault name[/orange1]").strip()
+        vault_name = Prompt.ask(f"[{C_PRIMARY}]Vault name[/{C_PRIMARY}]").strip()
         if not vault_name:
             raise typer.Exit(0)
         resolved = Path.cwd() / vault_name
@@ -215,7 +215,7 @@ def dir_init(
     cfg.add_to_history(str(resolved))
 
     console.print(f"\n[bold {C_PRIMARY}]Vault created:[/bold {C_PRIMARY}] {resolved}")
-    console.print(f"[dim]Active vault set. Run [white]lava new[/white] to get started.[/dim]")
+    console.print(f"[dim]Active vault set. Run [{C_TEXT}]lava new[/{C_TEXT}] to get started.[/dim]")
 
 
 @dir_app.command("set")
@@ -254,7 +254,7 @@ def config_callback(
         if editor:
             subprocess.run([editor, str(config_path)])
         else:
-            console.print(f"[orange1]Config file:[/orange1] {config_path}")
+            console.print(f"[{C_PRIMARY}]Config file:[/{C_PRIMARY}] {config_path}")
             console.print("[dim]Set $EDITOR or lava config set editor <editor> to open it.[/dim]")
         return
 
@@ -295,14 +295,14 @@ def config_set(
 @app.command("version", rich_help_panel="Configuration")
 def cmd_version() -> None:
     """Show the installed lava version."""
-    console.print(f"lava [orange1]{_LAVA_VERSION}[/orange1]")
+    console.print(f"lava [{C_PRIMARY}]{_LAVA_VERSION}[/{C_PRIMARY}]")
 
 
 @app.command("uninstall", rich_help_panel="Other")
 def cmd_uninstall() -> None:
     """Uninstall lava from the current Python environment."""
     confirmed = Confirm.ask(
-        f"Uninstall [orange1]lava {_LAVA_VERSION}[/orange1] from this environment?",
+        f"Uninstall [{C_PRIMARY}]lava {_LAVA_VERSION}[/{C_PRIMARY}] from this environment?",
         default=False,
     )
     if not confirmed:

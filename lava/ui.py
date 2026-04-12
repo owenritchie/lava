@@ -11,11 +11,13 @@ from rich.table import Table
 console = Console()
 err_console = Console(stderr=True)
 
-C_PRIMARY = "orange1"
-C_HOT     = "orange_red1"
-C_EMBER   = "gold1"
-C_ERROR   = "bold red1"
-C_RULE    = "dark_red"
+C_PRIMARY = "#FF350C"
+C_HOT     = "#FF350C"
+C_EMBER   = "#6DE8E4"
+C_ERROR   = "bold #FF350C"
+C_RULE    = "#282926"
+C_MUTED   = "#6D7E85"
+C_TEXT    = "#FFF7E4"
 
 
 def print_error(msg: str) -> None:

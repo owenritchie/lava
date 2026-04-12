@@ -17,6 +17,7 @@ from lava import editor as ed
 from lava import graph as gph
 from lava import vault as vlt
 from lava import ui
+from lava.ui import C_PRIMARY, C_EMBER, C_TEXT, C_MUTED
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label, _pick_move_destination
 
@@ -41,14 +42,14 @@ def cmd_child(
     children = gph.get_parents(graph, name)
 
     if not children:
-        console.print(f"[dim]No inbound links to[/dim] [orange1]{name}[/orange1]")
+        console.print(f"[dim]No inbound links to[/dim] [{C_PRIMARY}]{name}[/{C_PRIMARY}]")
         return
 
     page_size = 50 if not all_links else len(children)
 
     def render(batch: list) -> None:
-        table = Table(header_style="bold orange1", title=f"Children of '{name}'")
-        table.add_column("Note", style="white")
+        table = Table(header_style=f"bold {C_PRIMARY}", title=f"Children of '{name}'")
+        table.add_column("Note", style=C_TEXT)
         for item in batch:
             table.add_row(item)
         console.print(table)
@@ -74,14 +75,14 @@ def cmd_parent(
     parents = gph.get_children(graph, name)
 
     if not parents:
-        console.print(f"[dim]No outbound links from[/dim] [orange1]{name}[/orange1]")
+        console.print(f"[dim]No outbound links from[/dim] [{C_PRIMARY}]{name}[/{C_PRIMARY}]")
         return
 
     page_size = cfg.load_config().get("pagination", 50)
 
     def render(batch: list) -> None:
-        table = Table(header_style="bold orange1", title=f"Parents of '{name}'")
-        table.add_column("Note", style="white")
+        table = Table(header_style=f"bold {C_PRIMARY}", title=f"Parents of '{name}'")
+        table.add_column("Note", style=C_TEXT)
         for item in batch:
             table.add_row(item)
         console.print(table)
@@ -114,7 +115,7 @@ def cmd_tree(
         subtree = gph.get_subtree_reversed(graph, name, max_depth)
         root_key = name.lower()
         display = graph.nodes[root_key].get("display", name) if root_key in graph else name
-        rich_tree = Tree(f"[bold orange1]{display}[/bold orange1]")
+        rich_tree = Tree(f"[bold {C_PRIMARY}]{display}[/bold {C_PRIMARY}]")
         _build_rich_tree_reversed(subtree, root_key, rich_tree, max_depth, set())
         console.print(rich_tree)
     else:
@@ -128,7 +129,7 @@ def cmd_tree(
         rich_tree = Tree(label)
         for root in roots:
             display = graph.nodes[root].get("display", root)
-            branch = rich_tree.add(f"[white]{display}[/white]")
+            branch = rich_tree.add(f"[{C_TEXT}]{display}[/{C_TEXT}]")
             _build_rich_tree_reversed(graph, root, branch, max_depth - 1, set())
 
         console.print(rich_tree)
@@ -149,7 +150,7 @@ def _build_rich_tree(
             branch.add(f"[dim]{graph.nodes[child].get('display', child)} (↩ cycle)[/dim]")
             continue
         display = graph.nodes[child].get("display", child)
-        child_branch = branch.add(f"[white]{display}[/white]")
+        child_branch = branch.add(f"[{C_TEXT}]{display}[/{C_TEXT}]")
         _build_rich_tree(graph, child, child_branch, remaining_depth - 1, visited)
 
 
@@ -168,7 +169,7 @@ def _build_rich_tree_reversed(
             branch.add(f"[dim]{graph.nodes[pred].get('display', pred)} (↩ cycle)[/dim]")
             continue
         display = graph.nodes[pred].get("display", pred)
-        child_branch = branch.add(f"[white]{display}[/white]")
+        child_branch = branch.add(f"[{C_TEXT}]{display}[/{C_TEXT}]")
         _build_rich_tree_reversed(graph, pred, child_branch, remaining_depth - 1, visited)
 
 
@@ -191,7 +192,7 @@ def cmd_links(
     inbound = gph.get_parents(graph, name)
     outbound = gph.get_children(graph, name)
 
-    console.print(f"\n[bold orange1]Links for:[/bold orange1] [white]{name}[/white]\n")
+    console.print(f"\n[bold {C_PRIMARY}]Links for:[/bold {C_PRIMARY}] [{C_TEXT}]{name}[/{C_TEXT}]\n")
     ui.print_links_table(inbound, outbound)
 
 
@@ -240,22 +241,22 @@ def cmd_orphans() -> None:
         try:
             days = (now - datetime.fromtimestamp(path.stat().st_mtime)).days
         except OSError:
-            return "white"
+            return C_TEXT
         if days > 90:
-            return "red"
+            return C_PRIMARY
         if days > 30:
-            return "gold1"
-        return "dim"
+            return C_EMBER
+        return C_MUTED
 
     def _print_orphans(orphan_list: list[tuple[str, Path]]) -> None:
-        console.print(f"\n[bold orange1]Orphaned Notes[/bold orange1] [dim]({len(orphan_list)})[/dim]\n")
+        console.print(f"\n[bold {C_PRIMARY}]Orphaned Notes[/bold {C_PRIMARY}] [dim]({len(orphan_list)})[/dim]\n")
         for i, (name, path) in enumerate(orphan_list):
             rel = path.relative_to(vault_path)
             age = _age_label(path)
             color = _age_color(path)
             rel_str = str(rel).replace("\\", "/")
             console.print(
-                f"  [dim]{i + 1:2}.[/dim]  [white]{name:<40}[/white]"
+                f"  [dim]{i + 1:2}.[/dim]  [{C_TEXT}]{name:<40}[/{C_TEXT}]"
                 f"  [dim]{rel_str}[/dim]  [{color}]{age}[/{color}]"
             )
         console.print()
@@ -274,7 +275,7 @@ def cmd_orphans() -> None:
             continue
 
         selected_name, selected_path = orphans[idx]
-        console.print(f"\n  [orange1]{selected_name}[/orange1]  [dim]{selected_path.relative_to(vault_path)}[/dim]\n")
+        console.print(f"\n  [{C_PRIMARY}]{selected_name}[/{C_PRIMARY}]  [dim]{selected_path.relative_to(vault_path)}[/dim]\n")
         action = Prompt.ask(r"  \[e]dit  \[m]ove  \[d]elete", default="").strip().lower()
 
         if action == "e":
@@ -292,7 +293,7 @@ def cmd_orphans() -> None:
                 orphans.pop(idx)
 
         elif action == "d":
-            confirmed = Confirm.ask(f"Archive [orange1]{selected_name}[/orange1]?", default=False)
+            confirmed = Confirm.ask(f"Archive [{C_PRIMARY}]{selected_name}[/{C_PRIMARY}]?", default=False)
             if confirmed:
                 archive_dir = vault_path / "_archive"
                 archive_dir.mkdir(exist_ok=True)
