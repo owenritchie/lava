@@ -74,10 +74,8 @@ def cmd_status() -> None:
 
 
 @app.command("count", rich_help_panel="Vault")
-def cmd_count(
-    all_vault: Annotated[bool, typer.Option("--all", "-a", help="Count all notes in the entire vault.")] = False,
-) -> None:
-    """Count notes in the current working directory.  [c]"""
+def cmd_count() -> None:
+    """Count notes in the current working directory and vault total.  [c]"""
     config = cfg.load_config()
     try:
         vault_path = vlt.get_vault_path(config)
@@ -85,14 +83,38 @@ def cmd_count(
         ui.print_error(str(e))
         raise typer.Exit(1)
 
-    if all_vault:
-        notes_paths = vlt.list_notes(vault_path)
-        console.print(f"[orange1]{len(notes_paths)}[/orange1] notes [dim](vault)[/dim]")
-    else:
-        current = _cwd(vault_path)
-        notes_paths = [p for p in vlt.list_notes(vault_path) if str(p).startswith(str(current))]
-        label = _cwd_label(vault_path)
-        console.print(f"[orange1]{len(notes_paths)}[/orange1] notes [dim]in[/dim] {label}")
+    all_notes = vlt.list_notes(vault_path)
+    current = _cwd(vault_path)
+    cwd_notes = [p for p in all_notes if str(p).startswith(str(current))]
+    label = _cwd_label(vault_path)
+    console.print(f"[cornflower_blue]{len(cwd_notes)}[/cornflower_blue] notes [dim]in[/dim] {label}")
+    console.print(f"[orange1]{len(all_notes)}[/orange1] notes [dim]in vault[/dim]")
+
+
+@app.command("clear", rich_help_panel="Vault")
+def cmd_clear() -> None:
+    """Clear all notes from the archive (_archive/)."""
+    config = cfg.load_config()
+    try:
+        vault_path = vlt.get_vault_path(config)
+    except ValueError as e:
+        ui.print_error(str(e))
+        raise typer.Exit(1)
+
+    archive_dir = vault_path / "_archive"
+    if not archive_dir.exists() or not any(archive_dir.iterdir()):
+        console.print("[dim]Archive is already empty.[/dim]")
+        return
+
+    items = list(archive_dir.iterdir())
+    console.print(f"\n[bold]Archive contains {len(items)} item{'s' if len(items) != 1 else ''}.[/bold]\n")
+    confirm = Prompt.ask("Type [bold red]DELETE[/bold red] to confirm").strip()
+    if confirm != "DELETE":
+        console.print("[dim]Cancelled.[/dim]")
+        return
+
+    shutil.rmtree(archive_dir)
+    ui.print_success("Archive cleared.")
 
 
 @app.command("search", rich_help_panel="Vault")
