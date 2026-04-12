@@ -55,7 +55,7 @@ def cmd_cd(
             note_count = sum(1 for _ in d.rglob("*.md"))
             console.print(f"  [dim]{i:2}.[/dim]  [orange1]{d.name}/[/orange1] [dim]{note_count}n[/dim]")
         console.print()
-        choice = Prompt.ask("cd #", default="").strip()
+        choice = Prompt.ask("Pick A Directory #", default="").strip()
         if not choice:
             return
         try:
