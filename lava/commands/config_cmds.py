@@ -8,8 +8,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
-from rich.prompt import Confirm, Prompt
-from rich.table import Table
+from rich.prompt import Confirm
 
 from lava import config as cfg
 from lava import ui
@@ -35,86 +34,44 @@ config_app = typer.Typer(
 @dir_app.callback(invoke_without_command=True)
 def dir_callback(
     ctx: typer.Context,
-    history: Annotated[bool, typer.Option("--history", help="Show recent vaults")] = False,
-    list_vaults: Annotated[bool, typer.Option("--list", help="Show recent vaults (alias for --history)")] = False,
-    pick: Annotated[bool, typer.Option("--pick", help="Pick vault from history")] = False,
-    clear: Annotated[bool, typer.Option("--clear", help="Unset the active vault path")] = False,
+    clear_vault_history: Annotated[bool, typer.Option("--clear-vault-history", help="Clear vault history")] = False,
 ) -> None:
     """Manage the active vault directory."""
     if ctx.invoked_subcommand is not None:
         return
 
-    if clear:
-        cfg.set_vault_path("")
-        ui.print_success("Vault path cleared.")
+    if clear_vault_history:
+        config = cfg.load_config()
+        config["vault"]["history"] = []
+        cfg.save_config(config)
+        ui.print_success("Vault history cleared.")
         return
 
-    if history or list_vaults:
-        _dir_history()
-        return
-
-    if pick:
-        _dir_pick()
-        return
-
-    _dir_set_prompt()
-
-
-def _dir_set_prompt() -> None:
-    """Interactively set the active vault path."""
-    current = cfg.get_vault_path()
-    if current:
-        console.print(f"[dim]Current vault:[/dim] [{C_PRIMARY}]{current}[/{C_PRIMARY}]")
-    else:
-        console.print("[dim]No vault set.[/dim]")
-
-    console.print(
-        f"\n  [dim]Enter a path, or [/dim][bold {C_TEXT}]f[/bold {C_TEXT}][dim] to browse folders[/dim]"
-    )
-    raw = Prompt.ask(f"[{C_PRIMARY}]Vault path[/{C_PRIMARY}]", default="").strip()
-
-    if not raw:
-        return
-
-    if raw.lower() == "f":
-        location = _pick_fs_folder()
-        if location is None:
-            return
-        resolved = str(location)
-    else:
-        resolved = str(Path(raw).expanduser().resolve())
-
-    if not Path(resolved).exists():
-        ui.print_error(f"Path does not exist: {resolved}")
-        raise typer.Exit(1)
-
-    cfg.set_vault_path(resolved)
-    cfg.add_to_history(resolved)
-    ui.print_success(f"Vault set to: {resolved}")
-
-
-def _dir_history() -> None:
     config = cfg.load_config()
     history = config.get("vault", {}).get("history", [])
+    current = cfg.get_vault_path()
+
     if not history:
-        console.print("[dim]No vault history.[/dim]")
+        if current:
+            console.print(f"[{C_PRIMARY}]{current}[/{C_PRIMARY}]")
+        else:
+            console.print("[dim]No vault set. Run [bold]lava dir <path>[/bold] to configure one.[/dim]")
         return
 
-    table = Table(title="Recent Vaults", header_style=f"bold {C_PRIMARY}")
-    table.add_column("#", style="dim", width=4)
-    table.add_column("Path", style=C_TEXT)
-    current = cfg.get_vault_path()
+    console.print()
     for i, p in enumerate(history, 1):
-        marker = f" [{C_EMBER}](active)[/{C_EMBER}]" if p == current else ""
-        table.add_row(str(i), p + marker)
-    console.print(table)
+        if p == current:
+            console.print(f"  [grey50]{i}.  {p}[/grey50] [{C_EMBER}]●[/{C_EMBER}]")
+        else:
+            console.print(f"  [grey50]{i}.  {p}[/grey50]")
+    console.print()
 
-    choice = Prompt.ask("Switch to vault # (or Enter to skip)", default="").strip()
+    console.print("  Switch to #: ", end="")
+    choice = input().strip()
     if not choice:
         return
     try:
-        idx = int(choice) - 1
-        selected = history[idx]
+        selected = history[int(choice) - 1]
     except (ValueError, IndexError):
         ui.print_error("Invalid selection.")
         return
@@ -123,118 +80,6 @@ def _dir_history() -> None:
     ui.print_success(f"Vault set to: {selected}")
 
 
-def _dir_pick() -> None:
-    config = cfg.load_config()
-    history = config.get("vault", {}).get("history", [])
-    if not history:
-        ui.print_error("No vault history to pick from.")
-        raise typer.Exit(1)
-
-    console.print(f"[bold {C_PRIMARY}]Recent vaults:[/bold {C_PRIMARY}]")
-    for i, p in enumerate(history, 1):
-        console.print(f"  [dim]{i}.[/dim] {p}")
-
-    choice = Prompt.ask("Pick a vault number", default="1")
-    try:
-        idx = int(choice) - 1
-        selected = history[idx]
-    except (ValueError, IndexError):
-        ui.print_error("Invalid selection.")
-        raise typer.Exit(1)
-
-    cfg.set_vault_path(selected)
-    cfg.add_to_history(selected)
-    ui.print_success(f"Vault set to: {selected}")
-
-
-def _pick_fs_folder() -> Path | None:
-    """Navigate the real filesystem level-by-level (folders only) and return chosen path."""
-    current = Path.home()
-
-    while True:
-        subdirs = sorted(
-            [p for p in current.iterdir() if p.is_dir() and not p.name.startswith(".")],
-            key=lambda p: p.name.lower(),
-        )
-
-        console.print(f"\n[bold {C_PRIMARY}]{current}[/bold {C_PRIMARY}]\n")
-        console.print(f"  [dim] 0.[/dim]  [dim]✓ use this folder[/dim]")
-        if current != current.anchor:
-            console.print(f"  [dim] b.[/dim]  [dim].. (go up)[/dim]")
-        for i, d in enumerate(subdirs, 1):
-            console.print(f"  [dim]{i:2}.[/dim]  [{C_PRIMARY}]{d.name}/[/{C_PRIMARY}]")
-        console.print()
-
-        choice = Prompt.ask("Pick folder or #", default="").strip().lower()
-        if not choice:
-            return None
-        if choice == "0":
-            return current
-        if choice == "b" and current != Path(current.anchor):
-            current = current.parent
-            continue
-        try:
-            idx = int(choice)
-            if 1 <= idx <= len(subdirs):
-                current = subdirs[idx - 1]
-            else:
-                ui.print_error("Invalid choice.")
-        except ValueError:
-            ui.print_error("Invalid choice.")
-
-
-@dir_app.command("init")
-def dir_init(
-    path: Annotated[Optional[str], typer.Argument(help="Path for the new vault. Omit to create in current directory.")] = None,
-    pick: Annotated[bool, typer.Option("--pick", help="Navigate filesystem to pick location")] = False,
-) -> None:
-    """Create a new vault directory and set it as the active vault."""
-    if pick:
-        location = _pick_fs_folder()
-        if location is None:
-            raise typer.Exit(0)
-        vault_name = Prompt.ask(f"[{C_PRIMARY}]Vault name[/{C_PRIMARY}]").strip()
-        if not vault_name:
-            raise typer.Exit(0)
-        resolved = location / vault_name
-    elif path:
-        resolved = Path(path).expanduser().resolve()
-    else:
-        vault_name = Prompt.ask(f"[{C_PRIMARY}]Vault name[/{C_PRIMARY}]").strip()
-        if not vault_name:
-            raise typer.Exit(0)
-        resolved = Path.cwd() / vault_name
-
-    if resolved.exists() and any(resolved.iterdir()):
-        ui.print_error(f"Directory already exists and is not empty: {resolved}")
-        raise typer.Exit(1)
-
-    resolved.mkdir(parents=True, exist_ok=True)
-
-    cfg.set_vault_path(str(resolved))
-    cfg.add_to_history(str(resolved))
-
-    console.print(f"\n[bold {C_PRIMARY}]Vault created:[/bold {C_PRIMARY}] {resolved}")
-    console.print(f"[dim]Active vault set. Run [{C_TEXT}]lava new[/{C_TEXT}] to get started.[/dim]")
-
-
-@dir_app.command("set")
-def dir_set(
-    path: Annotated[str, typer.Argument(help="Vault path, or 'current' for cwd")],
-) -> None:
-    """Set the active vault path."""
-    if path.lower() == "current":
-        resolved = str(Path.cwd())
-    else:
-        resolved = str(Path(path).expanduser().resolve())
-
-    if not Path(resolved).exists():
-        ui.print_error(f"Path does not exist: {resolved}")
-        raise typer.Exit(1)
-
-    cfg.set_vault_path(resolved)
-    cfg.add_to_history(resolved)
-    ui.print_success(f"Vault set to: {resolved}")
 
 
 @config_app.callback(invoke_without_command=True)
