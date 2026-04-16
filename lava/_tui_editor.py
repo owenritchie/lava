@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer, Header, TextArea
@@ -45,6 +46,14 @@ class LavaEditorApp(App):
     def action_save_quit(self) -> None:
         self.action_save()
         self.exit()
+
+    def on_key(self, event: events.Key) -> None:
+        if event.key == "space":
+            text_area = self.query_one("#editor", TextArea)
+            if text_area.has_focus:
+                text_area.insert(" ")
+                event.prevent_default()
+                event.stop()
 
     def action_quit_no_save(self) -> None:
         self.exit()
