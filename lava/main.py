@@ -16,7 +16,7 @@ app.add_typer(config_app, name="config", rich_help_panel="Configuration")
 
 from lava.commands.vault_info import cmd_status, cmd_count
 from lava.commands.notes import cmd_new, cmd_edit, cmd_delete, cmd_move, cmd_view
-from lava.commands.graph_cmds import cmd_orphans
+from lava.commands.graph_cmds import cmd_orphans, cmd_link
 
 app.command("s", hidden=True)(cmd_status)
 app.command("c", hidden=True)(cmd_count)
@@ -26,6 +26,7 @@ app.command("d", hidden=True)(cmd_delete)
 app.command("m", hidden=True)(cmd_move)
 app.command("v", hidden=True)(cmd_view)
 app.command("o", hidden=True)(cmd_orphans)
+app.command("l", hidden=True)(cmd_link)
 
 
 _ASCII_LAVA = """\
