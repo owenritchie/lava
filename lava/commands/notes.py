@@ -84,7 +84,10 @@ def cmd_new(
     note_path = vlt.create_note(current, name, body="", links=[], frontmatter_extra=extra)
     ui.print_success(f"Created: {note_path}")
 
-    open_after = Confirm.ask("Open in editor?", default=False)
+    try:
+        open_after = Confirm.ask("Open in editor?", default=False)
+    except (EOFError, KeyboardInterrupt):
+        raise typer.Exit(0)
     if open_after:
         editor_cfg = config.get("editor", "")
         start = ed.last_line(note_path)
