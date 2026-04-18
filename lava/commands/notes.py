@@ -272,7 +272,7 @@ def _suggest_links(vault_path: Path, note_path: Path) -> None:
             if name_match is not None:
                 selected.append(name_match)
             else:
-                console.print(f'[{C_EMBER}]Warning:[/{C_EMBER}] "{note_name}" doesn\'t exist — creating it.')
+                console.print(f'[{C_PRIMARY}]Warning:[/{C_PRIMARY}] "{note_name}" doesn\'t exist — creating it.')
                 vlt.create_note(vault_path, note_name, body="", links=[])
                 selected.append(note_name)
 
@@ -351,7 +351,7 @@ def cmd_delete(
 
     if parents:
         console.print(
-            f"[{C_EMBER}]Warning:[/{C_EMBER}] {len(parents)} note(s) link to [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]:"
+            f"[{C_PRIMARY}]Warning:[/{C_PRIMARY}] {len(parents)} note(s) link to [{C_PRIMARY}]{matched.stem}[/{C_PRIMARY}]:"
         )
         for p in parents[:10]:
             console.print(f"  • {p}")
