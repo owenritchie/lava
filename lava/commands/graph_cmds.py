@@ -173,9 +173,56 @@ def _build_rich_tree_reversed(
         _build_rich_tree_reversed(graph, pred, child_branch, remaining_depth - 1, visited)
 
 
+@app.command("link", rich_help_panel="Graph")
+def cmd_link(
+    name: Annotated[Optional[str], typer.Argument(help="Note to add links to (fuzzy matched). Omit to pick.")] = None,
+) -> None:
+    """Add wikilinks to a note.  [l]"""
+    from rich.prompt import Confirm as _Confirm
+    from lava.commands.notes import _suggest_links
+
+    config = cfg.load_config()
+    try:
+        vault_path = vlt.get_vault_path(config)
+    except ValueError as e:
+        ui.print_error(str(e))
+        raise typer.Exit(1)
+
+    current = _cwd(vault_path)
+
+    if name is None:
+        notes = sorted([p for p in current.iterdir() if p.is_file() and p.suffix == ".md"])
+        if not notes:
+            ui.print_error("No notes in current folder.")
+            raise typer.Exit(1)
+        console.print(f"\n{_cwd_label(vault_path)}\n")
+        for i, p in enumerate(notes):
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{p.stem}[/{C_TEXT}]")
+        console.print()
+        choice = Prompt.ask("Pick note #", default="").strip()
+        if not choice:
+            raise typer.Exit(0)
+        try:
+            note_path = notes[int(choice)]
+        except (ValueError, IndexError):
+            ui.print_error("Invalid choice.")
+            raise typer.Exit(1)
+    else:
+        note_path = vlt.fuzzy_match(vault_path, name)
+        if note_path is None:
+            ui.print_error(f"No note found matching: {name}")
+            raise typer.Exit(1)
+        if note_path.stem.lower() != name.lower():
+            confirmed = _Confirm.ask(f"Add links to [{C_PRIMARY}]{note_path.stem}[/{C_PRIMARY}]?", default=True)
+            if not confirmed:
+                raise typer.Exit(0)
+
+    _suggest_links(vault_path, note_path)
+
+
 @app.command("links", rich_help_panel="Graph")
 def cmd_links(
-    name: Annotated[str, typer.Argument(help="Note name")],
+    name: Annotated[Optional[str], typer.Argument(help="Note name. Omit to pick from current folder.")] = None,
 ) -> None:
     """Show both inbound and outbound links for a note."""
     config = cfg.load_config()
@@ -185,9 +232,30 @@ def cmd_links(
         ui.print_error(str(e))
         raise typer.Exit(1)
 
+    current = _cwd(vault_path)
+
+    if name is None:
+        notes = sorted([p for p in current.iterdir() if p.is_file() and p.suffix == ".md"])
+        if not notes:
+            ui.print_error("No notes in current folder.")
+            raise typer.Exit(1)
+        console.print(f"\n{_cwd_label(vault_path)}\n")
+        for i, p in enumerate(notes):
+            console.print(f"  [dim]{i:2}.[/dim]  [{C_TEXT}]{p.stem}[/{C_TEXT}]")
+        console.print()
+        choice = Prompt.ask("Pick note #", default="").strip()
+        if not choice:
+            raise typer.Exit(0)
+        try:
+            note_path = notes[int(choice)]
+        except (ValueError, IndexError):
+            ui.print_error("Invalid choice.")
+            raise typer.Exit(1)
+        name = note_path.stem
+
     notes_paths = vlt.list_notes(vault_path)
-    notes = [vlt.parse_note(p) for p in notes_paths]
-    graph = gph.build_graph(notes)
+    all_notes = [vlt.parse_note(p) for p in notes_paths]
+    graph = gph.build_graph(all_notes)
 
     inbound = gph.get_parents(graph, name)
     outbound = gph.get_children(graph, name)
