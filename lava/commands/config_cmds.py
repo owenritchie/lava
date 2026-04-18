@@ -31,6 +31,23 @@ config_app = typer.Typer(
 )
 
 
+@dir_app.command("set")
+def dir_set(
+    path: Annotated[str, typer.Argument(help="Path to set as the active vault directory")],
+) -> None:
+    """Set the active vault directory."""
+    p = Path(path).expanduser().resolve()
+    if not p.exists():
+        ui.print_error(f"Path does not exist: {p}")
+        raise typer.Exit(1)
+    if not p.is_dir():
+        ui.print_error(f"Not a directory: {p}")
+        raise typer.Exit(1)
+    cfg.set_vault_path(str(p))
+    cfg.add_to_history(str(p))
+    ui.print_success(f"Vault set to: {p}")
+
+
 @dir_app.callback(invoke_without_command=True)
 def dir_callback(
     ctx: typer.Context,
