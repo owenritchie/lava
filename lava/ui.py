@@ -14,7 +14,8 @@ err_console = Console(stderr=True)
 C_PRIMARY = "#FF350C"
 C_HOT     = "#FF350C"
 C_EMBER   = "#6DE8E4"
-C_ERROR   = "bold #FF350C"
+C_SUCCESS = "#b6dd98"
+C_ERROR   = "bold #CC444B"
 C_RULE    = "#282926"
 C_MUTED   = "#6D7E85"
 C_TEXT    = "#FFF7E4"
@@ -25,13 +26,13 @@ def print_error(msg: str) -> None:
 
 
 def print_success(msg: str) -> None:
-    console.print(f"[bold {C_EMBER}]✓ {msg}[/bold {C_EMBER}]")
+    console.print(f"[bold {C_SUCCESS}]✓ {msg}[/bold {C_SUCCESS}]")
 
 
 def print_links_table(inbound: list[str], outbound: list[str]) -> None:
     table = Table(show_header=True, header_style=f"bold {C_PRIMARY}")
-    table.add_column("Inbound Links", style=C_EMBER)
-    table.add_column("Outbound Links", style=C_HOT)
+    table.add_column("Inbound Links", style=C_TEXT)
+    table.add_column("Outbound Links", style=C_TEXT)
 
     max_rows = max(len(inbound), len(outbound), 1)
     for i in range(max_rows):

@@ -17,7 +17,7 @@ from lava import editor as ed
 from lava import graph as gph
 from lava import vault as vlt
 from lava import ui
-from lava.ui import C_PRIMARY, C_EMBER, C_TEXT, C_MUTED
+from lava.ui import C_PRIMARY, C_TEXT, C_MUTED
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label, _pick_move_destination
 
@@ -245,8 +245,8 @@ def cmd_orphans() -> None:
         if days > 90:
             return C_PRIMARY
         if days > 30:
-            return C_EMBER
-        return C_MUTED
+            return C_MUTED
+        return C_TEXT
 
     def _print_orphans(orphan_list: list[tuple[str, Path]]) -> None:
         console.print(f"\n[bold {C_PRIMARY}]Orphaned Notes[/bold {C_PRIMARY}] [dim]({len(orphan_list)})[/dim]\n")

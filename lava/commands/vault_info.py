@@ -19,7 +19,7 @@ from lava import graph as gph
 from lava import search as srch
 from lava import vault as vlt
 from lava import ui
-from lava.ui import C_PRIMARY, C_EMBER, C_TEXT, C_RULE
+from lava.ui import C_PRIMARY, C_TEXT, C_RULE
 from lava._app import app, console
 from lava._helpers import _cwd, _cwd_label, _pick_move_destination
 
@@ -68,7 +68,7 @@ def cmd_status() -> None:
     if most_linked:
         ml_table = Table(title="Most Linked Notes", header_style=f"bold {C_PRIMARY}")
         ml_table.add_column("Note", style=C_TEXT)
-        ml_table.add_column("Inbound Links", style=C_EMBER, justify="right")
+        ml_table.add_column("Inbound Links", style=C_TEXT, justify="right")
         for name, count in most_linked:
             ml_table.add_row(name, str(count))
         console.print(ml_table)
@@ -88,7 +88,7 @@ def cmd_count() -> None:
     current = _cwd(vault_path)
     cwd_notes = [p for p in all_notes if str(p).startswith(str(current))]
     label = _cwd_label(vault_path)
-    console.print(f"[{C_EMBER}]{len(cwd_notes)}[/{C_EMBER}] notes [dim]in[/dim] {label}")
+    console.print(f"[{C_PRIMARY}]{len(cwd_notes)}[/{C_PRIMARY}] notes [dim]in[/dim] {label}")
     console.print(f"[{C_PRIMARY}]{len(all_notes)}[/{C_PRIMARY}] notes [dim]in vault[/dim]")
 
 
