@@ -9,10 +9,13 @@ import lava.commands.notes  # noqa: F401
 import lava.commands.vault_info  # noqa: F401
 import lava.commands.graph_cmds  # noqa: F401
 import lava.commands.config_cmds  # noqa: F401
+import lava.commands.init_cmds  # noqa: F401
 
 from lava.commands.config_cmds import dir_app, config_app
+from lava.commands.init_cmds import init_app
 app.add_typer(dir_app, name="dir", rich_help_panel="Configuration")
 app.add_typer(config_app, name="config", rich_help_panel="Configuration")
+app.add_typer(init_app, name="init", rich_help_panel="Configuration")
 
 from lava.commands.vault_info import cmd_status, cmd_count
 from lava.commands.notes import cmd_new, cmd_edit, cmd_delete, cmd_move, cmd_view
