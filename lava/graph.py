@@ -37,12 +37,19 @@ def build_graph(notes: list[dict]) -> nx.DiGraph:
 
 
 def _resolve_node(graph: nx.DiGraph, name: str) -> str | None:
-    """Return the node key for a name, case-insensitively."""
-    key = name.lower().strip()
+    """Return the node key for a name, case-insensitively.
+
+    Strips folder prefixes (e.g. 'projects/meeting-notes') and .md
+    extensions before lookup so all of the following resolve identically:
+    'meeting-notes', 'projects/meeting-notes', 'meeting-notes.md'.
+    """
+    from pathlib import Path as _Path
+    stem = _Path(name.replace("\\", "/")).stem
+    key = stem.lower().strip()
     if key in graph:
         return key
     for node in graph.nodes:
-        if name.lower() in node.lower():
+        if key in node.lower():
             return node
     return None
 
